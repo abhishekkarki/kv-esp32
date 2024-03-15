@@ -1,0 +1,35 @@
+# build output
+/bin
+/.bin
+/build
+/deps
+/.ccls-cache
+/.cache
+/cmake-build-*
+
+# IDEs & editors
+.idea
+.vscode
+.iml
+\#*
+.#*
+*~
+.*.swp
+
+# sdkconfig (use sdkconfig.defaults to persist configuration)
+sdkconfig
+sdkconfig.old
+
+# IDF component manager
+managed_components
+dependencies.lock
+
+# code search
+/.ignore
+/.globalrc
+/GPATH
+/GRTAGS
+/GTAGS
+
+# macOS
+.DS_Store

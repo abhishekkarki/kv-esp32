@@ -1,0 +1,32 @@
+# You can change the options via `idf.py menuconfig` -> "Assignment Configuration", followed by a rebuild
+
+menu "Assignment Configuration"
+
+    config LED_GPIO
+        int "LED GPIO pin number"
+        range 0 34
+        default 16
+        help
+            The GPIO pin number to toggle the (builtin) LED.
+            Some GPIOs are used for other purposes (flash connections, etc.) and cannot be used for this purpose.
+
+            GPIOs 35-39 are input-only and hence cannot be used as outputs.
+
+    # TODO 2.1: Add a new config option for the LED strip GPIO pin number and led count
+
+    config STRIP_GPIO
+        int "WS2812B LED strip GPIO pin number"
+        range 0 34
+        default 2
+
+    config STRIP_LED_COUNT
+        int "Amount of LEDs in the strip"
+        range 1 100
+        default 20
+
+    config BUTTON_GPIO
+        int "Button GPIO pin number"
+        range 0 35
+        default 4
+
+endmenu
