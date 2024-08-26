@@ -1,49 +1,85 @@
-#include <esp_log.h>
-#include <stdbool.h>
-// TODO 1.0: Add missing includes here
-// TODO 2.1: More missing includes
+#include <stdio.h>
+#include <inttypes.h>      // For PRI macros like PRId32
+#include "nvs_flash.h"
+#include "nvs.h"
+#include "esp_log.h"
 
-// Adapt these macro definitions using `idf.py menuconfig`
-#define LED_GPIO CONFIG_LED_GPIO
-// TODO add your other macro definitions here
+static const char *TAG = "NVS_EXAMPLE";
 
-static const char *TAG = "LED";
+// Function to write an integer value to NVS
+void write_nvs_value(const char* key, int32_t value) {
+    nvs_handle_t nvs_handle;
+    esp_err_t err;
 
-/**
- * Blinks the LED on and off forever.
- */
-static void blink() {
-    // TODO 1.2: Implement the loop
-    while (true) {
-        // Blink on (output high)
-
-        // Blink off (output low)
+    // Open NVS handle in read-write mode
+    err = nvs_open("storage", NVS_READWRITE, &nvs_handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Error (%s) opening NVS handle!", esp_err_to_name(err));
+        return;
     }
+
+    // Write the value to NVS
+    err = nvs_set_i32(nvs_handle, key, value);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to write value to NVS!");
+    } else {
+        // Commit the written value
+        err = nvs_commit(nvs_handle);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to commit written value!");
+        } else {
+            ESP_LOGI(TAG, "Successfully written and committed value: %" PRId32, value);
+        }
+    }
+
+    // Close NVS handle
+    nvs_close(nvs_handle);
 }
 
-/**
- * Runs various LED effects on the WS2812B LED strip.
- * Effect can be changed by pressing the button.
- */
-static void led_strip() {
-    /*
-     * TODO 3.2: implement your creative LED strip effects here. You should be able to cycle through them with the press
-     * of a button. You may make use of `color.h`
-     */
+// Function to read an integer value from NVS
+int32_t read_nvs_value(const char* key) {
+    nvs_handle_t nvs_handle;
+    esp_err_t err;
+    int32_t value = 0;  // Default value if not found
+
+    // Open NVS handle in read-only mode
+    err = nvs_open("storage", NVS_READONLY, &nvs_handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Error (%s) opening NVS handle!", esp_err_to_name(err));
+        return value;
+    }
+
+    // Read the value from NVS
+    err = nvs_get_i32(nvs_handle, key, &value);
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG, "Read value: %" PRId32, value);
+    } else if (err == ESP_ERR_NVS_NOT_FOUND) {
+        ESP_LOGW(TAG, "The value is not initialized yet!");
+    } else {
+        ESP_LOGE(TAG, "Error (%s) reading value from NVS!", esp_err_to_name(err));
+    }
+
+    // Close NVS handle
+    nvs_close(nvs_handle);
+    return value;
 }
 
-/**
- * Entrypoint. Called from bootloader and is where all application logic is executed from.
- */
+// Main application entry point
 void app_main(void) {
-    ESP_LOGI(TAG, "Setting up...");
-    // TODO 1.1: Set up the builtin LED GPIO pin as an output
-    // TODO 2.1: Comment out the builtin LED GPIO setup and initialize the LED strip (create a config struct on the
-    // stack and pass it by pointer to ws2812b_init...)
-    // TODO 3.1: Set up the button GPIO pin as an input
-    ESP_LOGI(TAG, "Setup complete!");
+    // Initialize NVS
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
 
-    blink();
-    // TODO 2.1: Comment out the line above and comment in the line below. We'll now be working with the LED strip :D
-    //    led_strip();
+    // Example of writing and reading to/from NVS
+    const char* key = "my_key";
+    int32_t value_to_store = 12345;
+
+    write_nvs_value(key, value_to_store);
+    int32_t stored_value = read_nvs_value(key);
+
+    ESP_LOGI(TAG, "Final read value: %" PRId32, stored_value);
 }
